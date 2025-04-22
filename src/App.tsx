@@ -1,11 +1,141 @@
+import { useEffect, useState } from "react";
+import { socket } from "./socket";
+import { ProductModel } from "./model/products-model";
 
 function App() {
+  const [isConnected, setIsConnected] = useState(socket.connected);
+  const [products, setProducts] = useState<ProductModel[]>();
+  const [productSearched, setProductSearched] = useState("");
+
+  async function setAllProducts() {
+    const res = await fetch("http://localhost:1000/api/products");
+    const data = await res.json();
+    setProducts(data);
+  }
+
+  useEffect(() => {
+    function onConnect() {
+      setIsConnected(true);
+    }
+
+    function onDisconnect() {
+      setIsConnected(false);
+    }
+
+    setAllProducts();
+
+    socket.on("connect", onConnect);
+    socket.on("disconnect", onDisconnect);
+
+    return () => {
+      socket.off("connect", onConnect);
+      socket.off("disconnect", onDisconnect);
+    };
+  }, []);
+
+  useEffect(() => {
+    socket.on("checked_receive", (data) => {
+      const inputs1 = document.querySelectorAll('input[type="checkbox"]');
+      const inputs = inputs1 as NodeListOf<HTMLInputElement>;
+      inputs[data.id].checked = true;
+      inputs[data.id].parentElement?.classList.add("marcado");
+    });
+    socket.on("unchecked_receive", (data) => {
+      const inputs1 = document.querySelectorAll('input[type="checkbox"]');
+      const inputs = inputs1 as NodeListOf<HTMLInputElement>;
+      inputs[data.id].checked = false;
+      inputs[data.id].parentElement?.classList.remove("marcado");
+    });
+  }, [socket]);
+
+  useEffect(() => {
+    const inputs = document.querySelectorAll('input[type="checkbox"]');
+    inputs.forEach((input1) => {
+      const input = input1 as HTMLInputElement;
+      input.addEventListener("click", () => {
+        const id = parseInt(input.id);
+        input.parentElement?.classList.toggle("marcado");
+        if (input.checked === true) {
+          socket.emit("checked", { id });
+        } else if (input.checked === false) {
+          socket.emit("unchecked", { id });
+        }
+      });
+    });
+  });
+
+  function handleProductSearched(e: React.ChangeEvent<HTMLInputElement>) {
+    setProductSearched(e.target.value);
+    if (e.target.value === "") {
+      setAllProducts();
+    }
+  }
+
+  function searchProduct() {
+    const newProducts = products?.filter((p) =>
+      p.name.toLowerCase().includes(productSearched.toLowerCase())
+    );
+    setProducts(newProducts);
+  }
+
+  function deleteProduct(id: string) {
+    const requestOptions = {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    };
+
+    fetch(`http://localhost:1000/api/products/${id}`, requestOptions).then(
+      (res) => console.log(res)
+    );
+  }
 
   return (
-    <div>
-      <h1 className='underline text-2xl'>Hello world</h1>
+    <div className="h-screen w-screen bg-yellow-50 flex justify-center items-center">
+      <div className="bg-yellow-100 rounded-2xl px-7 py-4 h-8/10 text-2xl">
+        <h1 className="text-3xl my-4 text-center">Lista de Compras</h1>
+        <input
+          type="text"
+          onChange={handleProductSearched}
+          value={productSearched}
+          placeholder="Digite aqui o produto que deseja"
+          className="bg-white border-2 outline-0 px-2 border-neutral-900 rounded-2xl"
+        />
+        <button onClick={searchProduct}>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="ml-5 w-5 cursor-pointer"
+            viewBox="0 0 512 512"
+          >
+            <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
+          </svg>
+        </button>
+        <ul className="my-5">
+          {products &&
+            products.map((product) => (
+              <li
+                key={product.id}
+                className="relative flex items-center justify-between"
+              >
+                <input
+                  className="m-2 appearance-none product cursor-pointer"
+                  type="checkbox"
+                  id={product.id}
+                />
+                <p className="px-4">{product.name}</p>
+                <svg
+                  onClick={() => deleteProduct(product.id)}
+                  className="w-4 cursor-pointer"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 448 512"
+                >
+                  <path d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z" />
+                </svg>{" "}
+              </li>
+            ))}
+        </ul>
+      </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

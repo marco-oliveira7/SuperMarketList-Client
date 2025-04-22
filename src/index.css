@@ -1,1 +1,32 @@
 @import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+  font-family: "Sour Gummy", sans-serif;
+  font-weight: 500;
+}
+
+.marcado {
+  text-decoration: line-through;
+}
+
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 0.5rem;
+  width: 0.5rem;
+  padding: 0.5rem;
+  border: 0.25rem solid rgb(219, 31, 31);
+  background-color: rgb(219, 31, 31);
+  border-radius: 20rem;
+}
+
+input[type="checkbox"]:checked {
+  border: 0.25rem solid rgb(0, 168, 65);
+  background-color: rgb(0, 168, 65);
+  color: rgb(0, 168, 65);
+}
+
+input[type="text"]::placeholder{
+  font-size:1rem
+}
