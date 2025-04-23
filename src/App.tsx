@@ -6,6 +6,8 @@ function App() {
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [products, setProducts] = useState<ProductModel[]>();
   const [productSearched, setProductSearched] = useState("");
+  const [creatingProduct, setCreatingProduct] = useState(false);
+  const [nameProduct, setNameProduct] = useState("");
 
   async function setAllProducts() {
     const res = await fetch("http://localhost:1000/api/products");
@@ -46,6 +48,10 @@ function App() {
       inputs[data.id].checked = false;
       inputs[data.id].parentElement?.classList.remove("marcado");
     });
+
+    socket.on("delete_receive", (data) => {
+      setProducts(data.newProducts);
+    });
   }, [socket]);
 
   useEffect(() => {
@@ -84,14 +90,32 @@ function App() {
       headers: { "Content-Type": "application/json" },
     };
 
-    fetch(`http://localhost:1000/api/products/${id}`, requestOptions).then(
-      (res) => console.log(res)
+    fetch(`http://localhost:1000/api/products/${id}`, requestOptions);
+
+    const newProducts = products?.filter((p) => p.id !== id);
+    setProducts(newProducts);
+    const idInt = parseInt(id);
+    socket.emit("delete", { idInt, newProducts });
+  }
+
+  function createProduct() {
+    const requestOptions = {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id: products?.length.toString(),
+        name: nameProduct,  
+      }),
+    };
+
+    fetch("http://localhost:1000/api/products", requestOptions).then((res) =>
+      console.log(res)
     );
   }
 
   return (
     <div className="h-screen w-screen bg-yellow-50 flex justify-center items-center">
-      <div className="bg-yellow-100 rounded-2xl px-7 py-4 h-8/10 text-2xl">
+      <div className="main">
         <h1 className="text-3xl my-4 text-center">Lista de Compras</h1>
         <input
           type="text"
@@ -109,6 +133,24 @@ function App() {
             <path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z" />
           </svg>
         </button>
+        <div className="flex justify-around my-5 border-2 rounded-xl">
+          <h1>Criar Produto</h1>
+          <button
+            onClick={() =>
+              creatingProduct === false
+                ? setCreatingProduct(true)
+                : setCreatingProduct(false)
+            }
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="ml-5 w-5 cursor-pointer"
+              viewBox="0 0 448 512"
+            >
+              <path d="M256 80c0-17.7-14.3-32-32-32s-32 14.3-32 32l0 144L48 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l144 0 0 144c0 17.7 14.3 32 32 32s32-14.3 32-32l0-144 144 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-144 0 0-144z" />
+            </svg>
+          </button>
+        </div>
         <ul className="my-5">
           {products &&
             products.map((product) => (
@@ -117,7 +159,7 @@ function App() {
                 className="relative flex items-center justify-between"
               >
                 <input
-                  className="m-2 appearance-none product cursor-pointer"
+                  className="m-2 appearance-none cursor-pointer"
                   type="checkbox"
                   id={product.id}
                 />
@@ -133,6 +175,44 @@ function App() {
               </li>
             ))}
         </ul>
+        {creatingProduct && (
+          <div className="main product">
+            <button
+              onClick={() =>
+                creatingProduct === true
+                  ? setCreatingProduct(false)
+                  : setCreatingProduct(true)
+              }
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 384 512"
+                className="w-4 cursor-pointer"
+              >
+                <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z" />
+              </svg>
+            </button>
+            <form
+              action=""
+              className="h-10/12 flex flex-col justify-between items-center"
+            >
+              <input
+                type="text"
+                placeholder="nome do produto"
+                value={nameProduct}
+                onChange={(e) => setNameProduct(e.target.value)}
+                className="bg-white border-2 outline-0 px-2 border-neutral-900 rounded-2xl"
+              />
+              <button
+                type="submit"
+                onClick={createProduct}
+                className="border-2 rounded-xl px-2"
+              >
+                Criar Produto
+              </button>
+            </form>
+          </div>
+        )}
       </div>
     </div>
   );

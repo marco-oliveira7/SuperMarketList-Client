@@ -27,6 +27,28 @@ input[type="checkbox"]:checked {
   color: rgb(0, 168, 65);
 }
 
-input[type="text"]::placeholder{
-  font-size:1rem
+input[type="text"]::placeholder {
+  font-size: 1.1rem;
+}
+
+.main {
+  background-color: var(--color-yellow-100);
+  border-radius: var(--radius-2xl);
+  padding-inline: calc(var(--spacing) * 7);
+  padding-block: calc(var(--spacing) * 4) ;
+  height: calc(8 / 10 * 100%);
+  line-height: var(
+    --tw-leading,
+    var(--text-2xl--line-height)
+  );
+  font-size: var(--text-2xl)
+}
+
+.main .product{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: calc(3 / 10 * 100%);
+  border: 2px solid black;
 }
