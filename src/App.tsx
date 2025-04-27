@@ -3,11 +3,14 @@ import { socket } from "./socket";
 import { ProductModel } from "./model/products-model";
 
 function App() {
+  const items = JSON.parse(localStorage.getItem("checkedProducts") as string);
+
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [products, setProducts] = useState<ProductModel[]>();
   const [productSearched, setProductSearched] = useState("");
-  const [creatingProduct, setCreatingProduct] = useState(false);
+  const [isCreatingProduct, setIsCreatingProduct] = useState(false);
   const [nameProduct, setNameProduct] = useState("");
+  const [checkedProducts, setCheckedProducts] = useState<string[]>(items);
 
   async function setAllProducts() {
     const res = await fetch("http://localhost:1000/api/products");
@@ -40,17 +43,18 @@ function App() {
       const inputs1 = document.querySelectorAll('input[type="checkbox"]');
       const inputs = inputs1 as NodeListOf<HTMLInputElement>;
       inputs[data.id].checked = true;
-      inputs[data.id].parentElement?.classList.add("marcado");
     });
     socket.on("unchecked_receive", (data) => {
       const inputs1 = document.querySelectorAll('input[type="checkbox"]');
       const inputs = inputs1 as NodeListOf<HTMLInputElement>;
       inputs[data.id].checked = false;
-      inputs[data.id].parentElement?.classList.remove("marcado");
     });
-
     socket.on("delete_receive", (data) => {
       setProducts(data.newProducts);
+      window.location.reload();
+    });
+    socket.on("create_receive", () => {
+      window.location.reload();
     });
   }, [socket]);
 
@@ -60,7 +64,6 @@ function App() {
       const input = input1 as HTMLInputElement;
       input.addEventListener("click", () => {
         const id = parseInt(input.id);
-        input.parentElement?.classList.toggle("marcado");
         if (input.checked === true) {
           socket.emit("checked", { id });
         } else if (input.checked === false) {
@@ -96,6 +99,7 @@ function App() {
     setProducts(newProducts);
     const idInt = parseInt(id);
     socket.emit("delete", { idInt, newProducts });
+    window.location.reload();
   }
 
   function createProduct() {
@@ -104,14 +108,36 @@ function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         id: products?.length.toString(),
-        name: nameProduct,  
+        name: nameProduct,
+        isChecked: false,
       }),
     };
 
     fetch("http://localhost:1000/api/products", requestOptions).then((res) =>
       console.log(res)
     );
+    socket.emit("create");
   }
+
+  const handleCheckedProduct = async (productId: string) => {
+    setProducts((prevProducts) =>
+      prevProducts?.map((p) =>
+        p.id === productId ? { ...p, isChecked: !p.isChecked } : p
+      )
+    );
+
+    const requestOptions = {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+    };
+
+    fetch(
+      `http://localhost:1000/api/products/${productId}`,
+      requestOptions
+    ).then((res) => console.log(res));
+
+    // socket.emit("create");
+  };
 
   return (
     <div className="h-screen w-screen bg-yellow-50 flex justify-center items-center">
@@ -137,9 +163,9 @@ function App() {
           <h1>Criar Produto</h1>
           <button
             onClick={() =>
-              creatingProduct === false
-                ? setCreatingProduct(true)
-                : setCreatingProduct(false)
+              isCreatingProduct === false
+                ? setIsCreatingProduct(true)
+                : setIsCreatingProduct(false)
             }
           >
             <svg
@@ -156,12 +182,14 @@ function App() {
             products.map((product) => (
               <li
                 key={product.id}
-                className="relative flex items-center justify-between"
+                className="cursor-pointer relative flex items-center justify-between border-2 my-4 px-2 rounded-xl"
               >
                 <input
                   className="m-2 appearance-none cursor-pointer"
+                  checked={product.isChecked}
                   type="checkbox"
                   id={product.id}
+                  onChange={() => handleCheckedProduct(product.id)}
                 />
                 <p className="px-4">{product.name}</p>
                 <svg
@@ -171,17 +199,17 @@ function App() {
                   viewBox="0 0 448 512"
                 >
                   <path d="M135.2 17.7L128 32 32 32C14.3 32 0 46.3 0 64S14.3 96 32 96l384 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-96 0-7.2-14.3C307.4 6.8 296.3 0 284.2 0L163.8 0c-12.1 0-23.2 6.8-28.6 17.7zM416 128L32 128 53.2 467c1.6 25.3 22.6 45 47.9 45l245.8 0c25.3 0 46.3-19.7 47.9-45L416 128z" />
-                </svg>{" "}
+                </svg>
               </li>
             ))}
         </ul>
-        {creatingProduct && (
+        {isCreatingProduct && (
           <div className="main product">
             <button
               onClick={() =>
-                creatingProduct === true
-                  ? setCreatingProduct(false)
-                  : setCreatingProduct(true)
+                isCreatingProduct === true
+                  ? setIsCreatingProduct(false)
+                  : setIsCreatingProduct(true)
               }
             >
               <svg
