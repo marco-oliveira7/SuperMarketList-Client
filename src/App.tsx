@@ -3,14 +3,12 @@ import { socket } from "./socket";
 import { ProductModel } from "./model/products-model";
 
 function App() {
-  const items = JSON.parse(localStorage.getItem("checkedProducts") as string);
 
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [products, setProducts] = useState<ProductModel[]>();
   const [productSearched, setProductSearched] = useState("");
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
   const [nameProduct, setNameProduct] = useState("");
-  const [checkedProducts, setCheckedProducts] = useState<string[]>(items);
 
   async function setAllProducts() {
     const res = await fetch("http://localhost:1000/api/products");
