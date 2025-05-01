@@ -3,7 +3,7 @@ import { socket } from "./socket";
 import { ProductModel } from "./model/products-model";
 
 function App() {
-  const url = "http://localhost:1000";
+  const url = "https://supermarketlist-server.onrender.com";
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [products, setProducts] = useState<ProductModel[]>();
   const [productSearched, setProductSearched] = useState("");
