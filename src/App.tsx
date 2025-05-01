@@ -4,7 +4,6 @@ import { ProductModel } from "./model/products-model";
 
 function App() {
   const url = "https://supermarketlist-server.onrender.com";
-  const [isConnected, setIsConnected] = useState(socket.connected);
   const [products, setProducts] = useState<ProductModel[]>();
   const [productSearched, setProductSearched] = useState("");
   const [isCreatingProduct, setIsCreatingProduct] = useState(false);
@@ -17,23 +16,7 @@ function App() {
   }
 
   useEffect(() => {
-    function onConnect() {
-      setIsConnected(true);
-    }
-
-    function onDisconnect() {
-      setIsConnected(false);
-    }
-
     setAllProducts();
-
-    socket.on("connect", onConnect);
-    socket.on("disconnect", onDisconnect);
-
-    return () => {
-      socket.off("connect", onConnect);
-      socket.off("disconnect", onDisconnect);
-    };
   }, []);
 
   useEffect(() => {
