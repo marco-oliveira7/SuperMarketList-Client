@@ -3,7 +3,7 @@ import { socket } from "./socket";
 import { ProductModel } from "./model/products-model";
 
 function App() {
-
+  const url = "http://localhost:1000";
   const [isConnected, setIsConnected] = useState(socket.connected);
   const [products, setProducts] = useState<ProductModel[]>();
   const [productSearched, setProductSearched] = useState("");
@@ -11,7 +11,7 @@ function App() {
   const [nameProduct, setNameProduct] = useState("");
 
   async function setAllProducts() {
-    const res = await fetch("http://localhost:1000/api/products");
+    const res = await fetch(`${url}/api/products`);
     const data = await res.json();
     setProducts(data);
   }
@@ -91,7 +91,7 @@ function App() {
       headers: { "Content-Type": "application/json" },
     };
 
-    fetch(`http://localhost:1000/api/products/${id}`, requestOptions);
+    fetch(`${url}/api/products/${id}`, requestOptions);
 
     const newProducts = products?.filter((p) => p.id !== id);
     setProducts(newProducts);
@@ -111,7 +111,7 @@ function App() {
       }),
     };
 
-    fetch("http://localhost:1000/api/products", requestOptions).then((res) =>
+    fetch(`${url}/api/products`, requestOptions).then((res) =>
       console.log(res)
     );
     socket.emit("create");
@@ -129,10 +129,9 @@ function App() {
       headers: { "Content-Type": "application/json" },
     };
 
-    fetch(
-      `http://localhost:1000/api/products/${productId}`,
-      requestOptions
-    ).then((res) => console.log(res));
+    fetch(`${url}/api/products/${productId}`, requestOptions).then((res) =>
+      console.log(res)
+    );
 
     // socket.emit("create");
   };
