@@ -91,16 +91,25 @@ function App() {
       headers: { "Content-Type": "application/json" },
     };
 
-    fetch(`${url}/api/products/${id}`, requestOptions);
+    fetch(`${url}/api/products/${id}`, requestOptions)
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+        socket.emit("delete", { idInt, newProducts });
+        window.location.reload();
+      })
+      .catch((err) => {
+        console.error("Erro ao criar produto:", err);
+      });
 
     const newProducts = products?.filter((p) => p.id !== id);
     setProducts(newProducts);
     const idInt = parseInt(id);
-    socket.emit("delete", { idInt, newProducts });
-    window.location.reload();
   }
 
-  function createProduct() {
+  function createProduct(e: { preventDefault: () => void; }) {
+    e.preventDefault();
+    setIsCreatingProduct(false)
     const requestOptions = {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -111,10 +120,16 @@ function App() {
       }),
     };
 
-    fetch(`${url}/api/products`, requestOptions).then((res) =>
-      console.log(res)
-    );
-    socket.emit("create");
+    fetch(`${url}/api/products`, requestOptions)
+    .then((res) => res.json())
+    .then((data) => {
+      window.location.reload();
+      socket.emit("create");
+      console.log(data);
+    })
+    .catch((err) => {
+      console.error("Erro ao criar produto:", err);
+    });
   }
 
   const handleCheckedProduct = async (productId: string) => {
@@ -129,11 +144,11 @@ function App() {
       headers: { "Content-Type": "application/json" },
     };
 
-    fetch(`${url}/api/products/${productId}`, requestOptions).then((res) =>
-      console.log(res)
-    );
+    fetch(`${url}/api/products/${productId}`, requestOptions)
+    .catch((err) => {
+      console.error("Erro ao atualizar produto:", err);
+    });;
 
-    // socket.emit("create");
   };
 
   return (
@@ -230,7 +245,7 @@ function App() {
               />
               <button
                 type="submit"
-                onClick={createProduct}
+                onClick={(e) => createProduct(e)}
                 className="border-2 rounded-xl px-2"
               >
                 Criar Produto
